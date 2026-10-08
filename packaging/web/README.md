@@ -91,8 +91,12 @@ python scripts/sync_upstream.py
 ```
 
 The script fetches `origin/main` and `upstream/main`, merges both into local `main`, and pushes
-to `hassan-nasser-arch/photocraft`. It preserves your personal commits. Start with a clean working
-tree on `main`; a merge conflict stops before pushing and leaves the files for you to resolve.
+to `hassan-nasser-arch/photocraft`. Regular merges preserve every upstream commit's original SHA,
+author, committer, dates and message, together with your personal commits. A merge commit connects
+the histories; it does not replace the individual updates. The script explicitly disables squash
+merges and checks that the original upstream tip is an ancestor of the commit being pushed.
+Start with a clean working tree on `main`; a conflict stops before pushing and leaves the files
+for you to resolve.
 
 It waits for the Pages run for the pushed commit to finish successfully, then checks the live
 `deployment.json` commit/run marker and downloads the HTML, JavaScript and WASM to verify their

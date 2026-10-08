@@ -119,10 +119,11 @@ class Sync:
         upstream = self.git("rev-parse", "refs/remotes/upstream/main")
         for reference in ("refs/remotes/origin/main", "refs/remotes/upstream/main"):
             try:
-                print(self.git("merge", "--no-edit", reference), flush=True)
+                print(self.git("merge", "--no-squash", "--no-edit", reference), flush=True)
             except SyncError as error:
                 raise SyncError(f"Merge stopped; nothing was pushed. Resolve/commit the merge or abort it before rerunning.\n{error}") from error
         commit = self.git("rev-parse", "HEAD")
+        # Retain the exact upstream commit objects, including every original author and timestamp.
         self.git("merge-base", "--is-ancestor", upstream, commit)
         if not (self.root / WORKFLOW).is_file():
             raise SyncError("The Pages workflow is missing after merging; nothing was pushed.")

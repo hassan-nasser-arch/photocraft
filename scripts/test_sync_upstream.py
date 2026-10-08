@@ -126,6 +126,24 @@ class SyncTests(unittest.TestCase):
         self.assertTrue((self.fork / "upstream.txt").is_file())
         self.git(self.fork, "merge-base", "--is-ancestor", result["upstream"], result["commit"])
 
+    def test_keeps_all_original_commit_objects_even_with_squash_default(self):
+        self.git(self.seed, "config", "user.name", "Upstream Contributor")
+        self.git(self.seed, "config", "user.email", "upstream@example.invalid")
+        (self.seed / "another-upstream.txt").write_text("another independent update\n")
+        self.commit(self.seed, "another upstream author")
+        self.git(self.seed, "push", str(self.upstream), "main")
+        commits = self.git(self.directory, "--git-dir", str(self.upstream), "rev-list", "main").splitlines()
+        originals = {commit: self.git(self.directory, "--git-dir", str(self.upstream), "cat-file", "commit", commit)
+                     for commit in commits}
+        self.assertGreaterEqual(len(commits), 3)
+        self.git(self.fork, "config", "branch.main.mergeOptions", "--squash")
+        result = self.sync().execute()
+        for commit, original in originals.items():
+            # Reachability proves that the commits remain part of published main, not merely loose objects.
+            self.git(self.directory, "--git-dir", str(self.origin), "merge-base", "--is-ancestor", commit, result["commit"])
+            actual = self.git(self.directory, "--git-dir", str(self.origin), "cat-file", "commit", commit)
+            self.assertEqual(actual, original)  # SHA, parents, author/committer identities, dates and message.
+
     def test_dirty_tree_stops_before_fetch_or_push(self):
         before = self.tip()
         (self.fork / "unfinished.txt").write_text("unsaved work")
