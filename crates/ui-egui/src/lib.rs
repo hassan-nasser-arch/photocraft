@@ -21,6 +21,7 @@ pub mod adjust_preview;
 pub mod adjust_ui;
 pub mod analysis_ui;
 pub mod artboard_ui;
+pub(crate) mod blend_preview;
 mod brand;
 pub mod brush_panel;
 pub mod brush_picker;
@@ -311,6 +312,8 @@ pub struct PhotocraftApp {
     trail: Option<stroke_trail::Trail>,
     /// Move tool drag shown live (`move_ui`).
     pub(crate) move_preview: Option<move_ui::MovePreview>,
+    /// A blend mode hovered in the Layers panel, shown live (`blend_preview`).
+    pub(crate) blend_preview: Option<blend_preview::BlendPreview>,
     /// Patch Tool drag: the healed document at the pointer (`patch_preview`).
     pub(crate) patch_preview: Option<patch_preview::PatchPreview>,
     /// The pixels a Magnetic Lasso border follows (`magnetic_lasso_ui`).
@@ -469,6 +472,7 @@ impl PhotocraftApp {
             live_stroke: None,
             trail: None,
             move_preview: None,
+            blend_preview: None,
             patch_preview: None,
             magnetic: Default::default(),
             secondary_erase: false,
@@ -1424,6 +1428,18 @@ impl PhotocraftApp {
         if set(b.width(), b.height(), &bytes).is_ok() {
             self.os_clip_sig = Some(clip_signature(b.width(), b.height(), &bytes));
         }
+    }
+
+    /// File › New's fields: the defaults, plus the Clipboard preset (the clipboard image's size,
+    /// selected) when the clipboard holds an image. Opening the dialog is an explicit request, so
+    /// the OS clipboard is read here, as for a paste.
+    pub(crate) fn new_document_fields(&mut self) -> serde_json::Map<String, serde_json::Value> {
+        let mut f = crate::state::UiState::new_document_fields();
+        self.import_os_clipboard();
+        if let Some(c) = self.session.clipboard.as_ref().filter(|c| !c.bounds.is_empty()) {
+            crate::new_doc_ui::set_clipboard(&mut f, c.bounds.width(), c.bounds.height());
+        }
+        f
     }
 
     /// If the OS clipboard holds an image that isn't the one we put there, make it the session

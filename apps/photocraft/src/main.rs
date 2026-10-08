@@ -390,12 +390,22 @@ fn main() -> eframe::Result {
             Ok(Box::new(app))
         }),
     );
-    // Closed before the first frames rendered: not a driver crash. (A start that failed to
-    // create its device keeps the marker, so the next one tries a safer backend.)
-    if result.is_ok()
-        && let Some(s) = sentinel.lock().unwrap_or_else(std::sync::PoisonError::into_inner).take()
+    // Closed or failed outside graphics initialization: not a driver crash. A renderer
+    // error keeps the marker, so the next start tries a safer backend.
+    if !gpu_startup::keep_marker_after_run(&result)
+        && let Some(mut s) = sentinel.lock().unwrap_or_else(std::sync::PoisonError::into_inner).take()
     {
-        s.finish();
+        if result.is_err()
+            && let Some(marker) = previous.crashed()
+        {
+            // This failure supplies no new graphics-crash evidence: retain the previous
+            // marker, rather than recording this attempt's fallback backend.
+            if let Err(error) = s.write(marker.clone()) {
+                log::warn!("couldn't restore previous GPU startup marker: {error}");
+            }
+        } else {
+            s.finish();
+        }
     }
     // Retry in a fresh process: winit event loops cannot be recreated reliably in-process.
     // Only renderer initialization failures qualify; never restart after editing has begun.

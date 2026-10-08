@@ -91,7 +91,7 @@ fn parse_brush(s: &Session, p: &Value, cmd: &str) -> Result<(Stroke, Option<Laye
         erase: false,
         ..base
     };
-    crate::brush_cmds::validate_brush_size(&brush, cmd)?;
+    crate::brush_cmds::validate_brush(&brush, cmd)?;
     if crate::channel_cmds::is_channel_target(p) {
         return Ok((Stroke { brush, points: pts }, None));
     }
