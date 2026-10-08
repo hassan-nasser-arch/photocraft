@@ -51,6 +51,7 @@ jobs:
           test -n "$(find dist/web -maxdepth 1 -name '*.wasm' -print -quit)"
           cp LICENSE-MIT LICENSE-APACHE NOTICE ATTRIBUTION.md dist/web/
           touch dist/web/.nojekyll
+          python3 scripts/sync_upstream.py --record-deployment dist/web
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
         with:

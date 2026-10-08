@@ -82,6 +82,28 @@ For a project repository, the default URL is `https://<owner>.github.io/<reposit
 relative asset URLs already support that prefix. GitHub Pages provides HTTPS and serves the
 static files; the `_headers` and `.htaccess` examples are for other hosts.
 
+### Sync upstream and wait for deployment
+
+From this checkout, run:
+
+```sh
+python scripts/sync_upstream.py
+```
+
+The script fetches `origin/main` and `upstream/main`, merges both into local `main`, and pushes
+to `hassan-nasser-arch/photocraft`. It preserves your personal commits. Start with a clean working
+tree on `main`; a merge conflict stops before pushing and leaves the files for you to resolve.
+
+It waits for the Pages run for the pushed commit to finish successfully, then checks the live
+`deployment.json` commit/run marker and downloads the HTML, JavaScript and WASM to verify their
+sizes and SHA-256 checksums. A failed build, incorrect assets or timeout returns a nonzero exit.
+The default wait limit is 30 minutes; use `--timeout 3600` for a slower first build.
+
+Needs Python 3, Git, working push credentials, and GitHub CLI authenticated with repository
+access. The script finds `gh` on PATH, falls back to this checkout's `target/github-tools/bin/gh.exe`,
+or accepts `--gh PATH`. If no matching Pages run exists, it starts one after 30 seconds; repeated
+runs with no new updates verify the existing successful deployment.
+
 ## Embedding in a page (iframe)
 
 ```html
