@@ -1817,12 +1817,14 @@ pub fn canvas_view(app: &mut PhotocraftApp, ui: &mut egui::Ui, idx: usize, rect:
         {
             crate::canvas_tool_menu::open_transform(app, [p.x, p.y]);
         }
+        let lasso_retracted = tool == Tool::Lasso && response.secondary_clicked() && crate::lasso_ui::undo_last_vertex(app);
         if tool == Tool::Lasso {
             crate::lasso_ui::canvas_input(app, &ctx, &xf, &response);
             (buttons.started, buttons.dragged, buttons.stopped, buttons.clicked) = (false, false, false, false);
         }
         // Right-click with the Move tool, or ⌘/Ctrl+right-click: the layers under the pointer.
         if response.secondary_clicked()
+            && !lasso_retracted
             && !transforming
             && crate::layer_pick_ui::is_gesture(tool, mods)
             && let Some(p) = response.interact_pointer_pos()
@@ -1832,6 +1834,7 @@ pub fn canvas_view(app: &mut PhotocraftApp, ui: &mut egui::Ui, idx: usize, rect:
             crate::layer_pick_ui::open(app, [p.x, p.y], d[0], d[1]);
         }
         if response.secondary_clicked()
+            && !lasso_retracted
             && !transforming
             && !crate::layer_pick_ui::is_gesture(tool, mods)
             && let Some(p) = response.interact_pointer_pos()
