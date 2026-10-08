@@ -66,6 +66,22 @@ location /photocraft/ {
 
 Local test: `python3 -m http.server 8765` inside the folder, then open http://localhost:8765/.
 
+## GitHub Pages
+
+[`.github/workflows/pages.yml`](../../.github/workflows/pages.yml) builds the Rust/WebAssembly
+app with Trunk on every push to `main`, then publishes `dist/web` to GitHub Pages. It can also
+be started manually from the Actions tab. Cargo dependencies are cached, and the build includes
+the HEIC/HEIF feature configured in `apps/photocraft-web/index.html`.
+
+Set **Settings > Pages > Build and deployment > Source** to **GitHub Actions** before the first
+deployment. The workflow uses the repository's `GITHUB_TOKEN`; no SSH key or other deployment
+secret is needed in Actions. Generated binaries stay out of Git history. The published files
+include the project's licenses, notice and attribution.
+
+For a project repository, the default URL is `https://<owner>.github.io/<repository>/`. Trunk's
+relative asset URLs already support that prefix. GitHub Pages provides HTTPS and serves the
+static files; the `_headers` and `.htaccess` examples are for other hosts.
+
 ## Embedding in a page (iframe)
 
 ```html

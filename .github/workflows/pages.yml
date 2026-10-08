@@ -1,0 +1,75 @@
+name: PhotoCraft Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  TRUNK_VERSION: 0.21.14
+
+jobs:
+  build:
+    name: Build website
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: pages-web
+      - name: Install Trunk
+        shell: bash
+        run: |
+          trunk_archive="$RUNNER_TEMP/trunk.tar.gz"
+          trunk_release="https://github.com/trunk-rs/trunk/releases/download/v${TRUNK_VERSION}"
+          curl --retry 3 -fsSL "$trunk_release/trunk-x86_64-unknown-linux-gnu.tar.gz" -o "$trunk_archive"
+          curl --retry 3 -fsSL "$trunk_release/trunk-x86_64-unknown-linux-gnu.tar.gz.sha256" -o "$trunk_archive.sha256"
+          trunk_expected="$(tr -d '[:space:]' < "$trunk_archive.sha256")"
+          trunk_actual="$(sha256sum "$trunk_archive" | cut -d ' ' -f 1)"
+          test "$trunk_actual" = "$trunk_expected"
+          tar -xzf "$trunk_archive" -C "$RUNNER_TEMP" trunk
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Build PhotoCraft
+        working-directory: apps/photocraft-web
+        run: trunk build --release --locked
+      - name: Prepare static website
+        shell: bash
+        run: |
+          test -f dist/web/index.html
+          test -n "$(find dist/web -maxdepth 1 -name '*.wasm' -print -quit)"
+          cp LICENSE-MIT LICENSE-APACHE NOTICE ATTRIBUTION.md dist/web/
+          touch dist/web/.nojekyll
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/web
+
+  deploy:
+    name: Deploy GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Deploy PhotoCraft
+        id: deployment
+        uses: actions/deploy-pages@v4
