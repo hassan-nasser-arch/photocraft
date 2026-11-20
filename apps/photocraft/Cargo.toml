@@ -73,7 +73,7 @@ muda = { version = "=0.21.2", default-features = false }
 dispatch2 = { version = "=0.3.1", default-features = false, features = ["std"] }
 
 [target.'cfg(unix)'.dependencies]
-rustix = { version = "=1.1.5", features = ["fs"] }
+rustix = { version = "=1.1.6", features = ["fs"] }
 # Reads CFBundleExecutable from a chosen macOS application bundle's Info.plist (XML or binary) for
 # external vector editing. Already in Cargo.lock (craft-update); built on every Unix so Linux CI
 # compiles and tests the bundle checks. The event-stream reader (behind plist's "unstable"
@@ -94,7 +94,7 @@ wl-clipboard-rs = { version = "=0.9.4", default-features = false }
 zbus = "=5.19.0"
 # Caption button glyphs from the desktop's icon theme (`caption_style.rs`): SVG paths only, no
 # text or images. Already in Cargo.lock (photocraft-io); pinned exactly.
-resvg = { version = "=0.45.1", default-features = false }
+resvg = { version = "=0.49.0", default-features = false }
 # Already used by the portal stack; bounded waits let cancelling close the OS request.
 futures-lite = "=2.6.1"
 async-io = "=2.6.0"
@@ -125,4 +125,4 @@ winresource = "0.1"
 
 [dev-dependencies]
 # Opt-in native save-back acceptance transports embedded sources through engine JSON.
-base64 = "=0.22.1"
+base64 = "=0.23.1"
